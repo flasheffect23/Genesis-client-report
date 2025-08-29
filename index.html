@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Genesis Client Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+  </script>
+  <script type="module" src="index.js"></script>
+</head>
+<body>
+  <div class="report-flex-container">
+    <!-- 3D Viewer Column -->
+    <div class="viewer-column">
+      <div class="viewer-container">
+        <div id="viewer"></div>
+        <div class="controls">
+          <div class="dials-group">
+            <div class="dial-control">
+              <label for="spinDial">Spin Model</label>
+              <div id="spinDial" class="dial"><div class="dial-handle"></div></div>
+            </div>
+            <div class="dial-control">
+              <label for="lightDial">Lights</label>
+              <div id="lightDial" class="dial"><div class="dial-handle"></div></div>
+              <span id="lightValue">1.00</span>
+            </div>
+          </div>
+          <button id="animateSpinBtn" class="button">Auto Spin</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data & Controls Column -->
+    <div class="data-column">
+      <!-- Upload Panel -->
+      <div class="upload-container">
+        <div class="file-upload-group">
+          <label for="stykuCSV">Upload CSV (Before)</label>
+          <input type="file" id="stykuCSV" accept=".csv">
+        </div>
+        <div class="file-upload-group">
+          <label for="stykuCSV_after">Upload CSV (After)</label>
+          <input type="file" id="stykuCSV_after" accept=".csv">
+        </div>
+        <div class="file-upload-group">
+            <label for="stykuPDF">Upload PDF Report (Before)</label>
+            <input type="file" id="stykuPDF" accept=".pdf">
+        </div>
+        <div class="file-upload-group">
+            <label for="stykuPDF_after">Upload PDF Report (After)</label>
+            <input type="file" id="stykuPDF_after" accept=".pdf">
+        </div>
+        <div class="avatar-upload-grid">
+            <div class="avatar-upload-slot">
+                <label for="avatarFile1">Upload 3D Avatar (Before)</label>
+                <input type="file" id="avatarFile1" class="avatar-file-input" data-index="0" accept=".obj">
+                <button id="removeAvatar1" class="remove-avatar-btn" data-index="0" style="display: none;">Remove Avatar</button>
+            </div>
+            <div class="avatar-upload-slot">
+                <label for="avatarFile2">Upload 3D Avatar (After)</label>
+                <input type="file" id="avatarFile2" class="avatar-file-input" data-index="1" accept=".obj">
+                <button id="removeAvatar2" class="remove-avatar-btn" data-index="1" style="display: none;">Remove Avatar</button>
+            </div>
+        </div>
+      </div>
+
+      <!-- Client Data Panel -->
+      <div class="client-data-panel">
+        <h3>Client Data</h3>
+        <div class="client-data-column">
+          <label for="name">Name</label>
+          <input type="text" id="name">
+          <div class="vitals-inputs-grid" style="margin-top: 16px;">
+            <div class="vitals-input-group">
+              <label for="age">Age</label>
+              <input type="number" id="age">
+            </div>
+            <div class="vitals-input-group">
+              <label for="gender">Gender</label>
+              <select id="gender">
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+              </select>
+            </div>
+             <div class="vitals-input-group">
+              <label for="height">Height (in)</label>
+              <input type="number" id="height">
+            </div>
+            <div class="vitals-input-group">
+              <label for="weight">Weight (lbs)</label>
+              <input type="number" id="weight">
+            </div>
+          </div>
+
+          <div class="vitals-panel">
+            <h4>Vitals</h4>
+            <p class="vitals-reminder">Regularly tracking these vitals provides deeper insight into your overall health beyond just weight and body fat.</p>
+            <div class="vitals-content-grid">
+               <div class="vitals-input-group">
+                  <label for="restingHeartRate">Resting Heart Rate (bpm)</label>
+                  <input type="number" id="restingHeartRate">
+              </div>
+              <div class="vitals-input-group">
+                  <label for="bpSystolic">Blood Pressure (SYS / DIA)</label>
+                  <div class="bp-input-fields">
+                      <input type="number" id="bpSystolic" placeholder="SYS">
+                      <span>/</span>
+                      <input type="number" id="bpDiastolic" placeholder="DIA">
+                  </div>
+              </div>
+              <div class="bp-graphic-container">
+                <div class="bp-gauge-vertical-container">
+                    <div class="bp-gauge-col">
+                        <div class="bp-gauge-track">
+                            <div id="bpSystolicFill" class="bp-gauge-fill"></div>
+                        </div>
+                        <div id="bpSystolicValue" class="bp-gauge-value">--</div>
+                        <div class="bp-gauge-label">Systolic</div>
+                    </div>
+                    <div class="bp-gauge-col">
+                        <div class="bp-gauge-track">
+                            <div id="bpDiastolicFill" class="bp-gauge-fill"></div>
+                        </div>
+                        <div id="bpDiastolicValue" class="bp-gauge-value">--</div>
+                        <div class="bp-gauge-label">Diastolic</div>
+                    </div>
+                </div>
+                <div class="bp-classification-label">
+                    <div id="bpIndicator" class="indicator-light"></div>
+                    <span id="bpGaugeLabel"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-group">
+            <h4>Metabolic Rates</h4>
+            <div class="metabolic-rates-container">
+              <div class="metabolic-rate-box">
+                <h5>Basal Metabolic Rate (BMR)</h5>
+                <div class="metabolic-rate-value">
+                  <span id="bmrValue">--</span>
+                  <span class="unit">kcal/day</span>
+                </div>
+              </div>
+              <div class="metabolic-rate-box">
+                <h5>Resting Metabolic Rate (RMR)</h5>
+                <div class="metabolic-rate-value">
+                  <span id="rmrValue">--</span>
+                  <span class="unit">kcal/day</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-group bmi-panel">
+              <h4>Body Mass Index (BMI)</h4>
+              <div class="comparison-grid">
+                <div class="comparison-column">
+                  <h5>Before</h5>
+                  <div class="bmi-gauge-container">
+                    <svg id="bmiGauge" class="bmi-gauge" viewBox="0 0 100 55">
+                      <path id="bmiGaugeTrack" d="M 5 50 A 45 45 0 0 1 95 50" stroke-width="8" class="bmi-gauge-track"></path>
+                      <path id="bmiGaugeUnder" d="M 5 50 A 45 45 0 0 1 27.5 10.3" stroke-width="10" class="bmi-gauge-under"></path>
+                      <path id="bmiGaugeHealthy" d="M 27.5 10.3 A 45 45 0 0 1 61.5 6.2" stroke-width="10" class="bmi-gauge-healthy"></path>
+                      <path id="bmiGaugeOver" d="M 61.5 6.2 A 45 45 0 0 1 85.5 19.3" stroke-width="10" class="bmi-gauge-over"></path>
+                      <path id="bmiGaugeObese" d="M 85.5 19.3 A 45 45 0 0 1 95 50" stroke-width="10" class="bmi-gauge-obese"></path>
+                      <path id="bmiNeedle" d="M 50 50 L 50 10" stroke-width="3" stroke="var(--text-color)" class="bmi-gauge-needle"></path>
+                    </svg>
+                    <div id="bmiGaugeValue" class="bmi-gauge-value">--</div>
+                    <div id="bmiGaugeLabel" class="bmi-gauge-label"></div>
+                  </div>
+                </div>
+                <div class="comparison-column comparison-after" style="display: none;">
+                  <h5>After</h5>
+                  <div class="bmi-gauge-container">
+                    <svg id="bmiGauge_after" class="bmi-gauge" viewBox="0 0 100 55">
+                      <path id="bmiGaugeTrack_after" d="M 5 50 A 45 45 0 0 1 95 50" stroke-width="8" class="bmi-gauge-track"></path>
+                      <path id="bmiGaugeUnder_after" d="M 5 50 A 45 45 0 0 1 27.5 10.3" stroke-width="10" class="bmi-gauge-under"></path>
+                      <path id="bmiGaugeHealthy_after" d="M 27.5 10.3 A 45 45 0 0 1 61.5 6.2" stroke-width="10" class="bmi-gauge-healthy"></path>
+                      <path id="bmiGaugeOver_after" d="M 61.5 6.2 A 45 45 0 0 1 85.5 19.3" stroke-width="10" class="bmi-gauge-over"></path>
+                      <path id="bmiGaugeObese_after" d="M 85.5 19.3 A 45 45 0 0 1 95 50" stroke-width="10" class="bmi-gauge-obese"></path>
+                      <path id="bmiNeedle_after" d="M 50 50 L 50 10" stroke-width="3" stroke="var(--text-color)" class="bmi-gauge-needle"></path>
+                    </svg>
+                    <div id="bmiGaugeValue_after" class="bmi-gauge-value">--</div>
+                    <div id="bmiGaugeLabel_after" class="bmi-gauge-label"></div>
+                    <div class="gauge-change" id="bmiGaugeChange_after"></div>
+                  </div>
+                </div>
+              </div>
+              <div id="bmiPointsDroppedPanel" class="points-dropped-panel" style="display: none;"></div>
+          </div>
+
+          <div id="pdf-composition-insights" style="display: none;">
+            <div class="metric-group">
+              <h4>Body Shape Ratios</h4>
+              <div class="comparison-grid">
+                  <div class="comparison-column">
+                      <h5>Before</h5>
+                      <h6 class="gauge-title">Waist Circumference</h6>
+                      <div class="waist-circ-gauge">
+                        <div id="waistCircBar" class="waist-circ-bar"></div>
+                        <div id="waistCircMarker" class="waist-circ-marker"></div>
+                        <div id="waistCircValue" class="waist-circ-value">-- in</div>
+                        <div class="waist-circ-legend">
+                            <span>Low Risk</span>
+                            <span id="waistCircRiskLabel">High Risk (>40 in)</span>
+                        </div>
+                      </div>
+                      <h6 class="gauge-title">Hip Circumference</h6>
+                      <div class="hip-circ-gauge">
+                          <div id="hipCircBar" class="hip-circ-bar"></div>
+                          <div id="hipCircMarker" class="hip-circ-marker"></div>
+                          <div id="hipCircValue" class="hip-circ-value">-- in</div>
+                          <div class="hip-circ-legend">
+                              <span>25 in</span>
+                              <span>65 in</span>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="comparison-column comparison-after" style="display: none;">
+                      <h5>After</h5>
+                      <h6 class="gauge-title">Waist Circumference</h6>
+                      <div class="waist-circ-gauge">
+                        <div id="waistCircBar_after" class="waist-circ-bar"></div>
+                        <div id="waistCircMarker_after" class="waist-circ-marker"></div>
+                        <div id="waistCircValue_after" class="waist-circ-value">-- in</div>
+                        <div class="waist-circ-legend">
+                            <span>Low Risk</span>
+                            <span id="waistCircRiskLabel_after">High Risk (>40 in)</span>
+                        </div>
+                      </div>
+                      <h6 class="gauge-title">Hip Circumference</h6>
+                      <div class="hip-circ-gauge">
+                          <div id="hipCircBar_after" class="hip-circ-bar"></div>
+                          <div id="hipCircMarker_after" class="hip-circ-marker"></div>
+                          <div id="hipCircValue_after" class="hip-circ-value">-- in</div>
+                          <div class="hip-circ-legend">
+                              <span>25 in</span>
+                              <span>65 in</span>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+            </div>
+            <div class="metric-group">
+                <h4>Waist-to-Hip Ratio (WHR)</h4>
+                <div class="comparison-grid">
+                    <div class="comparison-column">
+                        <h5>Before</h5>
+                        <div class="whr-gauge-container">
+                            <svg id="whrGauge" class="whr-gauge" viewBox="0 0 100 55">
+                                <path id="whrGaugeTrack" d="M 5 50 A 45 45 0 0 1 95 50" stroke-width="8" stroke="#e5e7eb" fill="none"></path>
+                                <path id="whrGaugeLow" d="" stroke-width="10" class="whr-gauge-low"></path>
+                                <path id="whrGaugeMod" d="" stroke-width="10" class="whr-gauge-mod"></path>
+                                <path id="whrGaugeHigh" d="" stroke-width="10" class="whr-gauge-high"></path>
+                                <path id="whrNeedle" d="M 50 50 L 50 10" stroke-width="3" stroke="var(--text-color)" style="transform-origin: 50px 50px; transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);"></path>
+                            </svg>
+                            <div id="whrGaugeValue" class="whr-gauge-value">--</div>
+                            <div id="whrGaugeLabel" class="whr-gauge-label"></div>
+                        </div>
+                    </div>
+                    <div class="comparison-column comparison-after" style="display: none;">
+                        <h5>After</h5>
+                        <div class="whr-gauge-container">
+                            <svg id="whrGauge_after" class="whr-gauge" viewBox="0 0 100 55">
+                                <path id="whrGaugeTrack_after" d="M 5 50 A 45 45 0 0 1 95 50" stroke-width="8" stroke="#e5e7eb" fill="none"></path>
+                                <path id="whrGaugeLow_after" d="" stroke-width="10" class="whr-gauge-low"></path>
+                                <path id="whrGaugeMod_after" d="" stroke-width="10" class="whr-gauge-mod"></path>
+                                <path id="whrGaugeHigh_after" d="" stroke-width="10" class="whr-gauge-high"></path>
+                                <path id="whrNeedle_after" d="M 50 50 L 50 10" stroke-width="3" stroke="var(--text-color)" style="transform-origin: 50px 50px; transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);"></path>
+                            </svg>
+                            <div id="whrGaugeValue_after" class="whr-gauge-value">--</div>
+                            <div id="whrGaugeLabel_after" class="whr-gauge-label"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Composition & Distribution Panel -->
+      <div id="composition-analysis-panel" class="composition-analysis-panel" style="display: none;">
+        <h3>Composition & Distribution</h3>
+        <div class="metric-group">
+            <h4>Body Composition Analysis</h4>
+            <div class="comparison-grid">
+                <div class="comparison-column">
+                    <h5>Before</h5>
+                    <div id="bodyCompBreakdownContainer" class="chart-container"></div>
+                </div>
+                <div class="comparison-column comparison-after" style="display: none;">
+                    <h5>After</h5>
+                    <div id="bodyCompBreakdownContainer_after" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+         <div class="metric-group">
+            <h4>Fat Distribution Analysis</h4>
+            <div class="comparison-grid">
+                <div class="comparison-column">
+                    <h5>Before</h5>
+                    <div id="fatDistributionBreakdownContainer" class="chart-container"></div>
+                </div>
+                <div class="comparison-column comparison-after" style="display: none;">
+                    <h5>After</h5>
+                    <div id="fatDistributionBreakdownContainer_after" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <!-- Body Fat Ranking Panel -->
+      <div class="body-fat-ranking-panel" id="body-fat-ranking-panel" style="display: none;">
+          <h3>Body Fat Ranking</h3>
+          <div class="comparison-grid">
+              <div class="comparison-column">
+                  <h5>Before</h5>
+                   <div id="pdfYourRank" class="your-rank">
+                      <div class="progress-bar-label">
+                          <span>Body Fat: <strong id="pdfRankValue">--%</strong></span>
+                          <span id="pdfRankLabel"></span>
+                      </div>
+                      <div class="progress-bar-container">
+                          <div class="progress-bar-track"></div>
+                          <div class="progress-bar-marker"></div>
+                      </div>
+                       <div class="progress-bar-zones">
+                          <span>Lean</span>
+                          <span>Fit</span>
+                          <span>Avg.</span>
+                          <span>At Risk</span>
+                      </div>
+                  </div>
+              </div>
+               <div class="comparison-column comparison-after" style="display: none;">
+                  <h5>After</h5>
+                   <div id="pdfYourRank_after" class="your-rank">
+                      <div class="progress-bar-label">
+                          <span>Body Fat: <strong id="pdfRankValue_after">--%</strong></span>
+                          <span id="pdfRankLabel_after"></span>
+                      </div>
+                      <div class="progress-bar-container">
+                          <div class="progress-bar-track"></div>
+                          <div class="progress-bar-marker"></div>
+                      </div>
+                       <div class="progress-bar-zones">
+                          <span>Lean</span>
+                          <span>Fit</span>
+                          <span>Avg.</span>
+                          <span>At Risk</span>
+                      </div>
+                  </div>
+              </div>
+          </div>
+           <div class="comparison-grid" style="margin-top: 24px;">
+              <div class="comparison-column">
+                  <div id="pdfComparisonRank" class="comparison-rank">
+                      <div class="progress-bar-container">
+                          <div class="progress-bar-track"></div>
+                          <div class="progress-bar-marker"></div>
+                      </div>
+                      <div class="progress-bar-zones">
+                          <span>100th percentile</span>
+                          <span>0th percentile</span>
+                      </div>
+                      <p id="pdfCompareSummary"></p>
+                  </div>
+              </div>
+               <div class="comparison-column comparison-after" style="display: none;">
+                  <div id="pdfComparisonRank_after" class="comparison-rank">
+                      <div class="progress-bar-container">
+                          <div class="progress-bar-track"></div>
+                          <div class="progress-bar-marker"></div>
+                      </div>
+                      <div class="progress-bar-zones">
+                          <span>100th percentile</span>
+                          <span>0th percentile</span>
+                      </div>
+                      <p id="pdfCompareSummary_after"></p>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- Body Age Panel -->
+      <div class="body-age-panel">
+        <h3>Body Age Estimate</h3>
+        <div class="comparison-grid">
+          <div class="comparison-column">
+            <h5>Before</h5>
+            <div class="body-age-display-container">
+              <span id="bodyAgeDisplayValue">--</span>
+              <span class="body-age-unit">years</span>
+            </div>
+            <p id="bodyAgeWarningMessage" style="display: none;"></p>
+          </div>
+          <div class="comparison-column comparison-after-body-age" style="display: none;">
+            <h5>After</h5>
+            <div class="body-age-display-container">
+              <span id="bodyAgeDisplayValue_after">--</span>
+              <span class="body-age-unit">years</span>
+            </div>
+            <p id="bodyAgeWarningMessage_after" style="display: none;"></p>
+          </div>
+        </div>
+        <div id="yearsGainedBackPanel" class="years-gained-back-panel" style="display: none;"></div>
+      </div>
+
+      <!-- Overall Health Risk Panel -->
+      <div class="health-risk-panel">
+        <h3>Overall Health Risk</h3>
+        <p>This is an estimated health risk based on your key biometrics like BMI, visceral fat, blood pressure, and body age.</p>
+        <div class="health-risk-gauge">
+          <div class="health-risk-gauge-bar">
+            <div class="risk-zone low">Low</div>
+            <div class="risk-zone moderate">Moderate</div>
+            <div class="risk-zone high">High</div>
+          </div>
+          <div id="healthRiskMarker" class="health-risk-marker" style="left: 0%;">
+            <div id="healthRiskLabel" class="health-risk-label">Low</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visceral Fat Panel -->
+      <div class="visceral-fat-panel">
+        <h3>Visceral Fat Analysis</h3>
+        <p>Visceral fat is stored deep within the abdominal cavity, wrapping around your internal organs. Tracking it is crucial as high levels are linked to increased health risks.</p>
+        <div class="comparison-grid">
+            <div class="comparison-column">
+                <h5>Before</h5>
+                <div class="visceral-fat-display">
+                    <span class="visceral-fat-display-value">
+                        <span id="visceralFatDisplayValue">--</span>
+                        <span class="unit">lbs</span>
+                    </span>
+                    <span class="visceral-fat-display-label">Visceral Fat</span>
+                </div>
+                <input type="number" id="visceralFat" step="0.1" data-source="" style="display: none;">
+                <div class="visceral-fat-gauge">
+                    <div class="visceral-fat-gauge-bar"></div>
+                    <div id="visceralFatMarker" class="visceral-fat-marker"></div>
+                    <div id="visceralFatValue" class="visceral-fat-value">-- lbs</div>
+                    <div class="visceral-fat-legend">
+                        <span>Healthy</span>
+                        <span>High Risk</span>
+                    </div>
+                </div>
+            </div>
+            <div class="comparison-column comparison-after" style="display: none;">
+                <h5>After</h5>
+                <div class="visceral-fat-display">
+                    <span class="visceral-fat-display-value">
+                        <span id="visceralFatDisplayValue_after">--</span>
+                        <span class="unit">lbs</span>
+                    </span>
+                    <span class="visceral-fat-display-label">Visceral Fat</span>
+                </div>
+                <input type="number" id="visceralFat_after" step="0.1" readonly style="display: none;">
+                <div class="visceral-fat-gauge">
+                    <div class="visceral-fat-gauge-bar"></div>
+                    <div id="visceralFatMarker_after" class="visceral-fat-marker"></div>
+                    <div id="visceralFatValue_after" class="visceral-fat-value">-- lbs</div>
+                    <div class="visceral-fat-legend">
+                        <span>Healthy</span>
+                        <span>High Risk</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <!-- PDF Insights Panel -->
+      <div id="pdf-insights-panel" style="display: none;">
+          <div class="metric-group">
+            <h3>Before vs. After Comparison</h3>
+            <div id="measurementsChartContainer"></div>
+            <div id="chartTooltip" class="chart-tooltip" style="display: none;"></div>
+          </div>
+          
+          <div class="metric-group">
+              <h3>Disease Risk Multipliers</h3>
+              <p style="font-size: 0.9em; color: var(--dark-gray); margin-top: -8px;">Based on your body composition, your estimated risk for certain diseases compared to the average person.</p>
+              <div class="comparison-grid">
+                  <div class="comparison-column">
+                      <h5>Before</h5>
+                      <div id="diseaseRiskChartContainer"></div>
+                  </div>
+                   <div class="comparison-column comparison-after" style="display: none;">
+                      <h5>After</h5>
+                      <div id="diseaseRiskChartContainer_after"></div>
+                  </div>
+              </div>
+          </div>
+
+          <div class="metric-group">
+            <h3>Visual Comparison</h3>
+            <div class="comparison-grid">
+              <div class="overlay-container">
+                <h5>Silhouette View</h5>
+                <canvas id="silhouetteOverlayCanvas" width="400" height="600"></canvas>
+              </div>
+              <div class="overlay-container">
+                <h5>Profile View</h5>
+                <canvas id="profileOverlayCanvas" width="400" height="600"></canvas>
+              </div>
+            </div>
+            <div class="silhouette-controls" style="display: none;">
+              <div id="silhouetteList" class="silhouette-list"></div>
+            </div>
+          </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
