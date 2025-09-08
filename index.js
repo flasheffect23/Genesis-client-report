@@ -1,4 +1,15 @@
+/*
+================================================================================
+NOTE FOR DEVELOPERS:
 
+This is the main JavaScript file for the Genesis Client Report application.
+
+To make changes to the application's logic, you can edit this file directly.
+There is no separate build or compilation step required.
+
+Simply make your edits, save the file, and commit the changes to GitHub.
+================================================================================
+*/
 document.addEventListener("DOMContentLoaded", () => {
     let scene, camera, renderer, controls;
     let models = [null, null];
@@ -19,29 +30,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const viewer = document.getElementById("viewer");
     if (!viewer)
         return;
-    scene = new THREE.Scene();
+    scene = new window.THREE.Scene();
     scene.background = null; // Use transparent background
-    camera = new THREE.PerspectiveCamera(75, viewer.clientWidth / viewer.clientHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // Enable transparency
+    camera = new window.THREE.PerspectiveCamera(75, viewer.clientWidth / viewer.clientHeight, 0.1, 1000);
+    renderer = new window.THREE.WebGLRenderer({ antialias: true, alpha: true }); // Enable transparency
     renderer.setClearColor(0x000000, 0); // Set clear color to transparent
     renderer.physicallyCorrectLights = true; // Use physically correct lighting model
-    renderer.outputEncoding = THREE.sRGBEncoding; // For correct color output
-    renderer.toneMapping = THREE.ACESFilmicToneMapping; // For a more cinematic look
+    renderer.outputEncoding = window.THREE.sRGBEncoding; // For correct color output
+    renderer.toneMapping = window.THREE.ACESFilmicToneMapping; // For a more cinematic look
     renderer.toneMappingExposure = 1.0;
     renderer.setSize(viewer.clientWidth, viewer.clientHeight);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = window.THREE.PCFSoftShadowMap;
     viewer.innerHTML = "";
     viewer.appendChild(renderer.domElement);
     // OrbitControls for trackpad + mouse
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls = new window.THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
     controls.enableZoom = true;
     controls.enablePan = true;
     controls.enableRotate = true;
     // --- Professional Lighting Setup for Realism ---
-    const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const keyLight = new window.THREE.DirectionalLight(0xffffff, 0.8);
     keyLight.position.set(-5, 5, 5);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.width = 2048; // Higher resolution shadows
@@ -49,16 +60,16 @@ document.addEventListener("DOMContentLoaded", () => {
     keyLight.shadow.camera.near = 0.5;
     keyLight.shadow.camera.far = 20;
     scene.add(keyLight);
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+    const fillLight = new window.THREE.DirectionalLight(0xffffff, 0.4);
     fillLight.position.set(5, 2, 5);
     scene.add(fillLight);
-    const backLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    const backLight = new window.THREE.DirectionalLight(0xffffff, 0.6);
     backLight.position.set(0, 3, -5);
     scene.add(backLight);
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    const ambientLight = new window.THREE.AmbientLight(0xffffff, 0.3);
     scene.add(ambientLight);
     // Add an adjustable accent spotlight from above
-    const accentSpotLight = new THREE.SpotLight(0xffffff, 0.5); // White color
+    const accentSpotLight = new window.THREE.SpotLight(0xffffff, 0.5); // White color
     accentSpotLight.position.set(0, 10, 2); // Positioned above and slightly forward
     accentSpotLight.angle = Math.PI / 6; // A reasonable cone angle
     accentSpotLight.penumbra = 0.5; // Soft edges for the spotlight
@@ -105,17 +116,17 @@ document.addEventListener("DOMContentLoaded", () => {
             controls.update();
             return;
         }
-        const overallBox = new THREE.Box3();
+        const overallBox = new window.THREE.Box3();
         activeModels.forEach((model, index) => {
             // Recalculate bounding box for positioning
-            const modelBox = new THREE.Box3().setFromObject(model);
-            const modelSize = modelBox.getSize(new THREE.Vector3());
+            const modelBox = new window.THREE.Box3().setFromObject(model);
+            const modelSize = modelBox.getSize(new window.THREE.Vector3());
             // Position models side-by-side if there are two
             if (activeModels.length === 2) {
-                const model1Box = new THREE.Box3().setFromObject(activeModels[0]);
-                const model1Size = model1Box.getSize(new THREE.Vector3());
-                const model2Box = new THREE.Box3().setFromObject(activeModels[1]);
-                const model2Size = model2Box.getSize(new THREE.Vector3());
+                const model1Box = new window.THREE.Box3().setFromObject(activeModels[0]);
+                const model1Size = model1Box.getSize(new window.THREE.Vector3());
+                const model2Box = new window.THREE.Box3().setFromObject(activeModels[1]);
+                const model2Size = model2Box.getSize(new window.THREE.Vector3());
                 const gap = 0.5;
                 activeModels[0].position.x = -model1Size.x / 2 - gap / 2;
                 activeModels[1].position.x = model2Size.x / 2 + gap / 2;
@@ -125,11 +136,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 model.position.x = 0;
             }
             // Update the overall bounding box
-            const positionedBox = new THREE.Box3().setFromObject(model);
+            const positionedBox = new window.THREE.Box3().setFromObject(model);
             overallBox.union(positionedBox);
         });
-        const center = overallBox.getCenter(new THREE.Vector3());
-        const size = overallBox.getSize(new THREE.Vector3());
+        const center = overallBox.getCenter(new window.THREE.Vector3());
+        const size = overallBox.getSize(new window.THREE.Vector3());
         // Frame the scene
         const maxDim = Math.max(size.x, size.y, size.z);
         const fov = camera.fov * (Math.PI / 180);
@@ -147,11 +158,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const model = gltf.scene;
         // Create a high-quality, physically-based material
-        const material = new THREE.MeshStandardMaterial({
+        const material = new window.THREE.MeshStandardMaterial({
             color: 0xe0e0e0,
             roughness: 0.4,
             metalness: 0.1,
-            side: THREE.DoubleSide // Render both sides, good practice for scanned meshes
+            side: window.THREE.DoubleSide // Render both sides, good practice for scanned meshes
         });
         model.traverse(function (child) {
             if (child.isMesh) {
@@ -163,14 +174,14 @@ document.addEventListener("DOMContentLoaded", () => {
         // Initial setup before positioning
         model.rotation.set(0, 0, 0);
         model.position.set(0, 0, 0);
-        const box = new THREE.Box3().setFromObject(model);
-        const center = new THREE.Vector3();
+        const box = new window.THREE.Box3().setFromObject(model);
+        const center = new window.THREE.Vector3();
         box.getCenter(center);
         model.position.sub(center);
         model.rotation.x = -Math.PI / 2;
         model.scale.setScalar(1.5);
         // Set vertical position so base is at y=0
-        const box2 = new THREE.Box3().setFromObject(model);
+        const box2 = new window.THREE.Box3().setFromObject(model);
         model.position.y -= box2.min.y;
         scene.add(model);
         models[index] = model;
@@ -185,7 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const contents = (_a = e.target) === null || _a === void 0 ? void 0 : _a.result;
             if (typeof contents !== 'string')
                 return;
-            const objLoader = new THREE.OBJLoader();
+            const objLoader = new window.THREE.OBJLoader();
             const obj = objLoader.parse(contents);
             // The GLTFExporter roundtrip is complex and might be the source of the error.
             // We can simplify by directly using the parsed OBJ group.
@@ -1320,7 +1331,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 const fileBuffer = await file.arrayBuffer();
                 const pdfData = new Uint8Array(fileBuffer);
-                const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                const pdf = await window.pdfjsLib.getDocument({ data: pdfData }).promise;
                 reportDataBefore = await parsePdfReport(pdf);
                 // Reset after data if a new before is uploaded
                 reportDataAfter = null;
@@ -1360,7 +1371,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 const fileBuffer = await file.arrayBuffer();
                 const pdfData = new Uint8Array(fileBuffer);
-                const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                const pdf = await window.pdfjsLib.getDocument({ data: pdfData }).promise;
                 const parsedData = await parsePdfReport(pdf);
                 if (!reportDataBefore) {
                     // No 'before' data exists, so treat this as the 'before' file
@@ -1414,7 +1425,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     async function extractImagesFromPage(page) {
         const operatorList = await page.getOperatorList();
-        const { OPS } = pdfjsLib;
+        const { OPS } = window.pdfjsLib;
         const images = [];
         for (let i = 0; i < operatorList.fnArray.length; i++) {
             if (operatorList.fnArray[i] !== OPS.paintImageXObject) {
@@ -1466,7 +1477,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return images;
     }
     async function parsePdfReport(pdf) {
-        var _a, _b, _c, _d, _e, _f, _g;
+        var _a, _b;
         const data = { measurements: [] };
         const extractValue = (text, label) => {
             var _a;
